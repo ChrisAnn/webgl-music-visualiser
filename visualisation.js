@@ -1,9 +1,5 @@
-
-/*
-var canvas = document.getElementById("audio-canvas");
-var ctx = canvas.getContext('2d');
-canvas.width = document.body.clientWidth / 1.4;
-*/
+var canvas = null;
+var ctx = null;
 
 function Sound() {
  var self = this;
@@ -43,30 +39,68 @@ function Sound() {
   request.send();
  };
  
-   this.play = function() {
-    if (!source) {
-      sound.load('IO-5.0.wav');
-    } else {
-      // Connect the processing graph:
-      // source -> destination
-      // source -> analyser -> jsProcessor -> destination
-      source.connect(context.destination);
-      source.connect(analyser);
+ this.processAudio = function() {
+  var freqByteData = new Uint8Array(analyser.frequencyBinCount);
+  
+  analyser.getByteFrequencyData(freqByteData);
+  self.renderFFT(freqByteData);
+ };
 
-      analyser.connect(jsProcessor);
-      jsProcessor.connect(context.destination);
+ this.renderFFT = function(freqByteData) {
+  var SPACER_WIDTH = 11;
+  var numBars = Math.round(canvas.width / SPACER_WIDTH);
 
-      source.noteOn(0);
-    }
-  };
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  freqByteData = freqByteData.subarray(viewportOffset_.valueAsNumber);
+
+  var colors = [
+  '#3369E8', // blue
+  '#D53225', // red
+  '#EEB211', // yellow
+  '#009939' // green
+  ];
+  // Draw rectangle for each frequency bin.
+  for (var i = 0; i < numBars /*freqByteData.length*/; ++i) {
+  var magnitude = freqByteData[i];
+
+
+    var lingrad = ctx.createLinearGradient(0, canvas.height, 0, canvas.height - magnitude);
+    lingrad.addColorStop(0, '#fff');
+    lingrad.addColorStop(1, colors[i % colors.length]);
+    ctx.fillStyle = lingrad;
+
+
+  ctx.fillRect(i * SPACER_WIDTH, canvas.height, colWidth_, -magnitude);
+  }
+ };
+
+ this.play = function() {
+  // Connect the processing graph:
+  // source -> destination
+  // source -> analyser -> jsProcessor -> destination
+  source.connect(context.destination);
+  source.connect(analyser);
+
+  analyser.connect(jsProcessor);
+  jsProcessor.connect(context.destination);
+
+  source.noteOn(0);
+ };
 
   this.stop = function() {
-    source.noteOff(0);
-    source.disconnect(0);
-    jsProcessor.disconnect(0);
-    analyser.disconnect(0);
-  };
+  source.noteOff(0);
+  source.disconnect(0);
+  jsProcessor.disconnect(0);
+  analyser.disconnect(0);
+ };
 }
 
-var sound = new Sound();
-sound.load('offkey_070221---snake-eyes-160.mp3');
+window.onLoad = function() {
+ canvas = document.getElementById("audio-canvas");
+ ctx = canvas.getContext('2d');
+ canvas.width = document.body.clientWidth / 1.4;
+
+ var sound = new Sound();
+ sound.load('offkey_070221---snake-eyes-160.mp3');
+};
