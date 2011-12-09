@@ -25,7 +25,7 @@ function Sound() {
       source.buffer = context.createBuffer(arrayBuffer,false /*Mix to mono*/);
   }
  
- jsProcessor = context_.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
+ jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
  jsProcessor.onaudioprocess = processAudio;
  
  analyser = context.createAnalyser();
