@@ -6,6 +6,7 @@ canvas.width = document.body.clientWidth / 1.4;
 */
 
 function Sound() {
+ var self = this;
  var context = new (window.AudioContext || window.webkitAudioContext) ();
  var source = null;
  var jsProcessor = null;
@@ -37,7 +38,7 @@ function Sound() {
   request.open('GET', url, true);
   request.responseType = 'arraybuffer';
   request.onload = function() {
-   self_.initAudio(request.response);
+   self.initAudio(request.response);
   };
   request.send();
  };
