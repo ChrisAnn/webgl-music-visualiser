@@ -1,8 +1,9 @@
-alert("hello");
 
+/*
 var canvas = document.getElementById("audio-canvas");
 var ctx = canvas.getContext('2d');
 canvas.width = document.body.clientWidth / 1.4;
+*/
 
 function Sound() {
  var context = new (window.AudioContext || window.webkitAudioContext) ();
