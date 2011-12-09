@@ -2,7 +2,12 @@
 <html  xmlns="http://www.w3.org/1999/xhtml">
     <head profile="http://www.w3.org/2005/10/profile">
         <title> Visualise! </title>
-        <script>
+    </head>
+    <body>
+        <canvas id="audio-canvas" height="300" width="300"></canvas>        
+        <p>MP3: <a href="http://sampleswap.org/viewtopic.php?t=1075">'07.02.21 - snake eyes' - offkey</a></p>
+        
+                <script>
              var canvas = document.getElementById("audio-canvas");
              var ctx = canvas.getContext('2d');
              canvas.width = document.body.clientWidth / 1.4;
@@ -105,9 +110,5 @@
             var sound = new Sound();
             sound.load('offkey_070221---snake-eyes-160.mp3'); 
         </script>
-    </head>
-    <body>
-        <canvas id="audio-canvas" height="300" width="300"></canvas>        
-        <p>MP3: <a href="http://sampleswap.org/viewtopic.php?t=1075">'07.02.21 - snake eyes' - offkey</a></p>
     </body>
 </html>
