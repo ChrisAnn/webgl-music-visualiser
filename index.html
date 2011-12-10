@@ -67,7 +67,7 @@
              
              this.initAudio = function(arrayBuffer) {
               source = context.createBufferSource();
-              source.looping = true;
+              source.loop = true;
               if (context.decodeAudioData) {
                   context.decodeAudioData(arrayBuffer, function(buffer) {
                       source.buffer = buffer;
