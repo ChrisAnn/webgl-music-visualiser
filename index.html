@@ -7,27 +7,17 @@
         <canvas id="audio-canvas" height="300" width="300"></canvas>        
         <p>MP3: <a href="http://sampleswap.org/viewtopic.php?t=1075">'07.02.21 - snake eyes' - offkey</a></p>
         
-                <script>
-             var canvas = document.getElementById("audio-canvas");
-             var ctx = canvas.getContext('2d');
-             canvas.width = document.body.clientWidth / 1.4;
+	<script>
+            var canvas = document.getElementById("audio-canvas");
+            var ctx = canvas.getContext('2d');
+            canvas.width = document.body.clientWidth / 1.4;
             
             function Sound() {
              var self = this;
-             var context = new (window.AudioContext || window.webkitAudioContext) ();
+             var context = new webkitAudioContext();
              var source = null;
              var jsProcessor = null;
              var analyser = null;
-             
-             this.load = function(url) {
-              var request = new XMLHttpRequest();
-              request.open('GET', url, true);
-              request.responseType = 'arraybuffer';
-              request.onload = function() {
-               self.initAudio(request.response);
-              };
-              request.send();
-             };
              
              this.processAudio = function() {
               var freqByteData = new Uint8Array(analyser.frequencyBinCount);
@@ -42,7 +32,7 @@
             
               ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-              freqByteData = freqByteData.subarray(viewportOffset_.valueAsNumber);
+              //freqByteData = freqByteData.subarray(viewportOffset.valueAsNumber);
             
               var colors = [
               '#3369E8', // blue
@@ -61,7 +51,7 @@
                 ctx.fillStyle = lingrad;
             
             
-              ctx.fillRect(i * SPACER_WIDTH, canvas.height, colWidth_, -magnitude);
+              ctx.fillRect(i * SPACER_WIDTH, canvas.height, 10, -magnitude);
               }
              };
              
@@ -79,13 +69,30 @@
               }
              
              jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
-             jsProcessor.onaudioprocess = processAudio;
+             jsProcessor.onaudioprocess = this.processAudio;
              
              analyser = context.createAnalyser();
              
              source.connect(context.destination);
-             };
+			 
+			  source.connect(analyser);
             
+              analyser.connect(jsProcessor);
+              jsProcessor.connect(context.destination);
+			  
+			 source.noteOn(0);
+             };
+                         
+             this.load = function(url) {
+              var request = new XMLHttpRequest();
+              request.open('GET', url, true);
+              request.responseType = 'arraybuffer';
+              request.onload = function() {
+               self.initAudio(request.response);
+              };
+              request.send();
+             };
+			 
              this.play = function() {
               // Connect the processing graph:
               // source -> destination
@@ -109,6 +116,7 @@
                         
             var sound = new Sound();
             sound.load('offkey_070221---snake-eyes-160.mp3'); 
+			//sound.play();
         </script>
     </body>
 </html>
