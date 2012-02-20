@@ -4,6 +4,7 @@
         <title> Visualise! </title>
         <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
         <script type="text/javascript" src="webgl-utils.js"></script>
+        <script type="text/javascript" src="beatdetektor.js"></script>
         
         <script id="shader-fs" type="x-shader/x-fragment">
             precision mediump float;
@@ -44,7 +45,10 @@
             
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
-                
+				
+				var sound = new Sound();
+				sound.load('offkey_070221---snake-eyes-160.mp3'); 
+
 				tick();
             }
 			
@@ -224,6 +228,8 @@
             }
             
 			var rCube = 0;
+			var zoom = -8.0;
+			
             function drawCuboid() {
                 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -232,7 +238,7 @@
 
 				mat4.identity(mvMatrix);
 
-				mat4.translate(mvMatrix, [0.0, 0.0, -8.0]);
+				mat4.translate(mvMatrix, [0.0, 0.0, zoom]);
 
 				mat4.rotate(mvMatrix, degToRad(rCube), [1, 1, 1]);
 				
@@ -246,6 +252,79 @@
                 setMatrixUniforms();
                 gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
             }
+			
+			function Sound() {
+			var self = this;
+			var context = new webkitAudioContext();
+			var source = null;
+			var jsProcessor = null;
+			var analyser = null;
+			var ftimer = 0;
+			var bd = new BeatDetektor(75, 149);
+			var vu = new BeatDetektor.modules.vis.VU();
+  
+			this.processAudio = function(e) {
+				// Get left channel input. No need for output arrays. They're hooked up
+				// directly to the destination, and we're not doing any processing.
+				var inputArrayL = e.inputBuffer.getChannelData(0);
+
+				var freqByteData = new Uint8Array(analyser.frequencyBinCount);
+
+				analyser.getByteFrequencyData(freqByteData);
+
+				bd.process(context.currentTime, inputArrayL);
+				ftimer += bd.last_update;
+				if (ftimer > 1.0 / 24.0) {
+					vu.process(bd, ftimer);
+					ftimer = 0;
+				}
+
+				if (vu.vu_levels.length) {
+					var z = vu.vu_levels[0];
+					zoom = (z * -100) - 8.0;
+					console.log(z);
+					console.log(zoom);
+				}
+			};
+
+			this.initAudio = function(arrayBuffer) {
+				source = context.createBufferSource();
+				source.loop = true;
+				if (context.decodeAudioData) {
+					context.decodeAudioData(arrayBuffer, function(buffer) {
+						source.buffer = buffer;
+					}, function(e) {
+						console.log(e);
+					});
+				} else {
+					source.buffer = context.createBuffer(arrayBuffer,false /*Mix to mono*/);
+				}
+
+				jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
+				jsProcessor.onaudioprocess = this.processAudio;
+
+				analyser = context.createAnalyser();
+
+				source.connect(context.destination);
+
+				source.connect(analyser);
+
+				analyser.connect(jsProcessor);
+				jsProcessor.connect(context.destination);
+
+				source.noteOn(0);
+			};
+
+			this.load = function(url) {
+				var request = new XMLHttpRequest();
+				request.open('GET', url, true);
+				request.responseType = 'arraybuffer';
+				request.onload = function() {
+					self.initAudio(request.response);
+				};
+				request.send();
+			};
+		}
         </script>
         
     </head>
