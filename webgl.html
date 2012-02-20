@@ -228,7 +228,7 @@
             }
             
 			var rCube = 0;
-			var zoom = -8.0;
+			var zoom = -10.0;
 			
             function drawCuboid() {
                 gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
@@ -260,7 +260,7 @@
 			var jsProcessor = null;
 			var analyser = null;
 			var ftimer = 0;
-			var bd = new BeatDetektor(75, 149);
+			var bd = new BeatDetektor();
 			var vu = new BeatDetektor.modules.vis.VU();
   
 			this.processAudio = function(e) {
@@ -281,7 +281,7 @@
 
 				if (vu.vu_levels.length) {
 					var z = vu.vu_levels[0];
-					zoom = (z * -100) - 8.0;
+					zoom = (z * 10) - 10.0;
 					console.log(z);
 					console.log(zoom);
 				}
