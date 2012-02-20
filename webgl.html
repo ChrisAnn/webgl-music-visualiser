@@ -36,14 +36,19 @@
             function webGLStart() {
                 var canvas = document.getElementById("canvas");
                 gl = WebGLUtils.setupWebGL(canvas);
-                
+				gl.viewportWidth = canvas.width;
+				gl.viewportHeight = canvas.height;
+               
                 initShaders();
+				initBuffers();
             
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
                 
-                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
                 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				
+				drawCuboid();
             }
             
             var shaderProgram;
@@ -108,7 +113,15 @@
                 return shader;
             }
             
-            var cubeVertexPositionBuffer;
+			var mvMatrix = mat4.create();
+			var pMatrix = mat4.create();
+
+			function setMatrixUniforms() {
+				gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+				gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+			}
+			
+			var cubeVertexPositionBuffer;
             var cubeVertexColorBuffer;
             var cubeVertexIndexBuffer;
 
@@ -193,21 +206,26 @@
             }
             
             function drawCuboid() {
-                gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
+				mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+				mat4.identity(mvMatrix);
+
+				mat4.translate(mvMatrix, [0.0, 0.0, -8.0]);
+
+				gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexPositionBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, cubeVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
                 gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexColorBuffer);
                 gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, cubeVertexColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
                 gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cubeVertexIndexBuffer);
-                //setMatrixUniforms();
+                setMatrixUniforms();
                 gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
-
             }
         </script>
         
     </head>
     <body onload="webGLStart()">
-        <canvas id="canvas" style="border:none;" width="1000" height="1000"/></canvas>
+        <canvas id="canvas" style="border:none;" width="800" height="800"/></canvas>
     </body>
 </html>
