@@ -32,6 +32,7 @@
         
         <script type="text/javascript">
             var gl;
+			var sound;
             
             function webGLStart() {
                 var canvas = document.getElementById("canvas");
@@ -46,7 +47,7 @@
                 gl.clearColor(0.0, 0.0, 0.0, 1.0);
                 gl.enable(gl.DEPTH_TEST);
 				
-				var sound = new Sound();
+				sound = new Sound();
 				sound.load('offkey_070221---snake-eyes-160.mp3'); 
 
 				tick();
@@ -64,6 +65,7 @@
 				var timeNow = new Date().getTime();
 				if (lastTime != 0) {
 					var elapsed = timeNow - lastTime;
+					sound.processAudio(elapsed);
 					for (var i in cubes) {
 						cubes[i].animate(elapsed);
 					}
@@ -313,18 +315,25 @@
 			function Sound() {
 			var self = this;
 			var context = new webkitAudioContext();
-			var source = null;
-			var jsProcessor = null;
-			var analyser = null;
-  
-			this.processAudio = function(e) {
-				var freqByteData = new Uint8Array(analyser.frequencyBinCount);
-
-				analyser.getByteFrequencyData(freqByteData);
-				
-				for (var i=0; i < cubes.length; i++) {
-					var bounce = calculateAvgLevel(i, freqByteData);
-					cubes[i].bounce(bounce);
+			var source;
+			var jsProcessor;
+			var analyser;
+			var freqByteData;
+			var gainNode;
+			var timer = 50;
+			var sampleRate = 50;
+			
+			this.processAudio = function(elapsed) {
+				if (timer >= 50) {
+					analyser.getByteFrequencyData(freqByteData);
+					
+					for (var i=0; i < cubes.length; i++) {
+						var bounce = calculateAvgLevel(i, freqByteData);
+						cubes[i].bounce(bounce);
+					}
+					timer = 0;
+				} else {
+					timer += elapsed;
 				}
 			};
 			
@@ -348,7 +357,6 @@
 			
 			this.initAudio = function(arrayBuffer) {
 				source = context.createBufferSource();
-				source.loop = true;
 				if (context.decodeAudioData) {
 					context.decodeAudioData(arrayBuffer, function(buffer) {
 						source.buffer = buffer;
@@ -358,11 +366,12 @@
 				} else {
 					source.buffer = context.createBuffer(arrayBuffer,false /*Mix to mono*/);
 				}
-
+				
 				jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
-				jsProcessor.onaudioprocess = this.processAudio;
+				//jsProcessor.onaudioprocess = this.processAudio;
 
 				analyser = context.createAnalyser();
+				freqByteData = new Uint8Array(analyser.frequencyBinCount);
 
 				source.connect(context.destination);
 
@@ -371,6 +380,8 @@
 				analyser.connect(jsProcessor);
 				jsProcessor.connect(context.destination);
 
+				source.gain.value = 0.2;
+				source.loop = true;
 				source.noteOn(0);
 			};
 
