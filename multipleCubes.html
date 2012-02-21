@@ -76,10 +76,10 @@
 			var spacing = 4.0;
 			
 			function initCubes() {
-				var numCubes = 3;
+				var numCubes = 16;
 				
 				for (var i=0; i < numCubes; i++) {
-					cubes.push(new Cube(i * spacing, 0, -15));
+					cubes.push(new Cube(i * spacing, 0, numCubes * -5.0));
 				}
 			}
 			
@@ -275,7 +275,7 @@
             
 			function Cube(startingX, startingY, startingZ) {
 				var rCube = 0;
-				var zoomAmount = startingZ;
+				var bounceAmount = startingY;
 				var cubeX = startingX;
 				var cubeY = startingY;
 				var cubeZ = startingZ;
@@ -283,8 +283,8 @@
 				this.draw = function() {
 					mvPushMatrix();
 					
-					console.log("cubeX = " + cubeX + " cubeY = " + cubeY + " cubeZ = " + cubeZ);
-					mat4.translate(mvMatrix, [cubeX, cubeY, zoomAmount]);
+					//console.log("cubeX = " + cubeX + " cubeY = " + cubeY + " cubeZ = " + cubeZ);
+					mat4.translate(mvMatrix, [cubeX, bounceAmount, cubeZ]);
 
 					mat4.rotate(mvMatrix, degToRad(rCube), [1, 1, 1]);
 					
@@ -306,9 +306,8 @@
 					rCube -= (75 * elapsed) / 1000.0;
 				};
 				
-				this.zoom = function(zoomFactor) {
-					zoomAmount = zoomFactor + cubeZ;
-					console.log(zoomAmount);
+				this.bounce = function(bounceFactor) {
+					bounceAmount = bounceFactor + cubeY;
 				};
 			}
 			
@@ -339,13 +338,27 @@
 				}
 
 				if (vu.vu_levels.length) {
-					var z = vu.vu_levels[0];
-					console.log(z);
-					for (var i in cubes) {
-						cubes[i].zoom(z * 10);
+					for (var i=0; i < cubes.length; i++) {
+						var bounce = calculateAvgLevel(i);
+						cubes[i].bounce(bounce * 50);
 					}
 				}
 			};
+			
+			function calculateAvgLevel(cubeNo) {
+				var ratio = vu.vu_levels.length / cubes.length;
+				//console.log("ratio = " + ratio);
+			
+				var lowerBound = Math.floor(cubeNo * ratio);
+				var upperBound = Math.ceil((cubeNo + 1) * ratio);
+				
+				var lowerLevel = vu.vu_levels[lowerBound];
+				var upperLevel = vu.vu_levels[upperBound];
+			
+				var bounce = (lowerLevel + upperLevel) / 2;
+				console.log(bounce);
+				return bounce;
+			}
 
 			this.initAudio = function(arrayBuffer) {
 				source = context.createBufferSource();
