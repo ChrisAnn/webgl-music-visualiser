@@ -71,6 +71,7 @@ function Sound() {
         analyser.connect(jsProcessor);
         jsProcessor.connect(context.destination);
 
+		source.gain.value = 0.2;
         source.noteOn(0);
     };
 
