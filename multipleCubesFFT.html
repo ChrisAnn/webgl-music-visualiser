@@ -35,6 +35,12 @@
 			var sound;
             
             function webGLStart() {
+				// One-liner to resume playback when user interacted with the page.
+				document.querySelector('button').addEventListener('click', function() {
+					var sound = new Sound();
+					sound.load('offkey_070221---snake-eyes-160.mp3'); 
+				});
+
                 var canvas = document.getElementById("canvas");
                 gl = WebGLUtils.setupWebGL(canvas);
 				gl.viewportWidth = canvas.width;
@@ -314,7 +320,7 @@
 			
 			function Sound() {
 			var self = this;
-			var context = new webkitAudioContext();
+			var context = new AudioContext();
 			var source;
 			var jsProcessor;
 			var analyser;
@@ -367,7 +373,7 @@
 					source.buffer = context.createBuffer(arrayBuffer,false /*Mix to mono*/);
 				}
 				
-				jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
+				jsProcessor = context.createScriptProcessor(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
 				//jsProcessor.onaudioprocess = this.processAudio;
 
 				analyser = context.createAnalyser();
@@ -380,9 +386,13 @@
 				analyser.connect(jsProcessor);
 				jsProcessor.connect(context.destination);
 
-				source.gain.value = 0.2;
 				source.loop = true;
-				source.noteOn(0);
+				var gain = context.createGain();
+				source.connect(gain);
+				gain.gain.value = 0.2;
+				gain.connect(context.destination);
+
+				source.start(0);
 			};
 
 			this.load = function(url) {
@@ -398,7 +408,8 @@
         </script>
         
     </head>
-    <body onload="webGLStart()">
+	<body onload="webGLStart()">
+		<button>Go!</button>
         <canvas id="canvas" style="border:none;" width="800" height="800"/></canvas>
     </body>
 </html>

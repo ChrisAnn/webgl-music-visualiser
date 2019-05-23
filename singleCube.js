@@ -1,6 +1,13 @@
 var gl;
 
+
 function webGLStart() {
+    // One-liner to resume playback when user interacted with the page.
+    document.querySelector('button').addEventListener('click', function() {
+        var sound = new Sound();
+        sound.load('offkey_070221---snake-eyes-160.mp3'); 
+    });
+
     var canvas = document.getElementById("canvas");
     gl = WebGLUtils.setupWebGL(canvas);
 	gl.viewportWidth = canvas.width;
@@ -12,9 +19,6 @@ function webGLStart() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 	
-	var sound = new Sound();
-	sound.load('offkey_070221---snake-eyes-160.mp3');
-
 	tick();
 }
 
@@ -219,9 +223,10 @@ function drawCuboid() {
     gl.drawElements(gl.TRIANGLES, cubeVertexIndexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
 }
 
+
 function Sound() {
 	var self = this;
-	var context = new webkitAudioContext();
+	var context = new AudioContext();
 	var source = null;
 	var jsProcessor = null;
 	var analyser = null;
@@ -266,7 +271,7 @@ function Sound() {
 			source.buffer = context.createBuffer(arrayBuffer,false /*Mix to mono*/);
 		}
 
-		jsProcessor = context.createJavaScriptNode(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
+		jsProcessor = context.createScriptProcessor(2048 /*bufferSize*/, 1 /*num inputs*/, 1 /*num outputs*/);
 		jsProcessor.onaudioprocess = this.processAudio;
 
 		analyser = context.createAnalyser();
@@ -278,8 +283,12 @@ function Sound() {
 		analyser.connect(jsProcessor);
 		jsProcessor.connect(context.destination);
 
-		source.gain.value = 0.2;
-		source.noteOn(0);
+        var gain = context.createGain();
+        source.connect(gain);
+        gain.gain.value = 0.2;
+        gain.connect(context.destination);
+
+        source.start(0);
 	};
 
 	this.load = function(url) {
